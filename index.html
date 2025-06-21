@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>孕妇控糖餐饮记录</title>
+    
+    <!-- TailwindCSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Framer Motion CDN -->
+    <script src="https://unpkg.com/framer-motion@10/dist/framer-motion.js"></script>
+    
+    <!-- Showdown.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    
+    <!-- Custom Styles -->
+    <style>
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .card-hover {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.3s ease-in-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        /* 隐藏滚动条 */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 主容器 -->
+    <div id="app" class="max-w-md mx-auto bg-white min-h-screen shadow-lg">
+        
+        <!-- 头部导航 -->
+        <header class="bg-emerald-500 text-white p-4 sticky top-0 z-10">
+            <div class="flex items-center justify-between">
+                <h1 class="text-xl font-bold">控糖餐饮记录</h1>
+                <button id="infoBtn" class="p-2 rounded-full hover:bg-emerald-600 transition-colors">
+                    <i class="fas fa-info-circle"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- 主要内容区域 -->
+        <main id="mainContent" class="pb-20">
+            <!-- 首页内容 -->
+            <div id="homePage" class="page-content">
+                <!-- 欢迎信息 -->
+                <div class="p-4 bg-gradient-to-r from-emerald-500 to-blue-500 text-white">
+                    <h2 class="text-lg font-semibold">今天是 <span id="currentDate"></span></h2>
+                    <p class="text-sm opacity-90">让我们一起记录健康的饮食</p>
+                </div>
+
+                <!-- 状态卡片 -->
+                <div class="p-4 space-y-4">
+                    <!-- 血糖状态卡片 -->
+                    <div class="card-shadow card-hover bg-white rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800">血糖状态</h3>
+                                <p class="text-sm text-gray-600">今日监测次数: <span id="bloodSugarCount">0</span></p>
+                            </div>
+                            <div class="text-red-500">
+                                <i class="fas fa-heartbeat text-2xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button id="addBloodSugarBtn" class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
+                                <i class="fas fa-plus mr-2"></i>记录血糖
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 热量摄入卡片 -->
+                    <div class="card-shadow card-hover bg-white rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800">今日热量</h3>
+                                <p class="text-sm text-gray-600"><span id="todayCalories">0</span> / 1890 kcal</p>
+                            </div>
+                            <div class="text-emerald-500">
+                                <i class="fas fa-fire text-2xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div id="calorieProgress" class="bg-emerald-500 h-2 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 体重记录卡片 -->
+                    <div class="card-shadow card-hover bg-white rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800">体重记录</h3>
+                                <p class="text-sm text-gray-600">最近记录: <span id="lastWeight">未记录</span></p>
+                            </div>
+                            <div class="text-blue-500">
+                                <i class="fas fa-weight text-2xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button id="addWeightBtn" class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                                <i class="fas fa-plus mr-2"></i>记录体重
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 快速记录按钮 -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="quickRecordBtn" class="card-shadow card-hover bg-emerald-500 text-white p-4 rounded-lg hover:bg-emerald-600 transition-colors">
+                            <i class="fas fa-utensils text-xl mb-2"></i>
+                            <div class="text-sm font-semibold">快速记录</div>
+                        </button>
+                        <button id="foodTableBtn" class="card-shadow card-hover bg-blue-500 text-white p-4 rounded-lg hover:bg-blue-600 transition-colors">
+                            <i class="fas fa-table text-xl mb-2"></i>
+                            <div class="text-sm font-semibold">食物交换表</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 饮食记录页面 -->
+            <div id="recordPage" class="page-content hidden">
+                <div class="p-4">
+                    <!-- 日期选择器 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">选择日期</label>
+                        <input type="date" id="recordDate" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+
+                    <!-- 餐次标签页 -->
+                    <div class="mb-4">
+                        <div class="flex overflow-x-auto space-x-2 pb-2">
+                            <button class="meal-tab active px-4 py-2 rounded-full bg-emerald-500 text-white text-sm whitespace-nowrap" data-meal="breakfast">早餐</button>
+                            <button class="meal-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-meal="morning-snack">早加</button>
+                            <button class="meal-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-meal="lunch">中餐</button>
+                            <button class="meal-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-meal="afternoon-snack">中加</button>
+                            <button class="meal-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-meal="dinner">晚餐</button>
+                            <button class="meal-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-meal="evening-snack">晚加</button>
+                        </div>
+                    </div>
+
+                    <!-- 当前餐次内容 -->
+                    <div id="mealContent" class="space-y-4">
+                        <!-- 已记录食物列表 -->
+                        <div class="bg-white rounded-lg p-4 card-shadow">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-lg font-semibold text-gray-800">已记录食物</h3>
+                                <button id="addFoodBtn" class="bg-emerald-500 text-white px-3 py-1 rounded-full text-sm hover:bg-emerald-600 transition-colors">
+                                    <i class="fas fa-plus mr-1"></i>添加
+                                </button>
+                            </div>
+                            <div id="foodList" class="space-y-2">
+                                <div class="text-gray-500 text-center py-4">暂无记录</div>
+                            </div>
+                        </div>
+
+                        <!-- 营养汇总 -->
+                        <div class="bg-white rounded-lg p-4 card-shadow">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">营养汇总</h3>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-emerald-500" id="mealCalories">0</div>
+                                    <div class="text-gray-600">热量 (kcal)</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-blue-500" id="mealProtein">0</div>
+                                    <div class="text-gray-600">蛋白质 (g)</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-amber-500" id="mealCarbs">0</div>
+                                    <div class="text-gray-600">碳水 (g)</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-red-500" id="mealFat">0</div>
+                                    <div class="text-gray-600">脂肪 (g)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 食物交换表页面 -->
+            <div id="foodTablePage" class="page-content hidden">
+                <div class="p-4">
+                    <!-- 搜索框 -->
+                    <div class="mb-4">
+                        <div class="relative">
+                            <input type="text" id="foodSearch" placeholder="搜索食物..." class="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                    </div>
+
+                    <!-- 分类标签页 -->
+                    <div class="p-4 border-b">
+                        <div class="flex overflow-x-auto space-x-2 pb-2">
+                            <button class="food-category-tab active px-4 py-2 rounded-full bg-emerald-500 text-white text-sm whitespace-nowrap" data-category="all">全部</button>
+                            <button class="food-category-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-category="grain">谷薯类</button>
+                            <button class="food-category-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-category="vegetable">蔬菜类</button>
+                            <button class="food-category-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-category="fruit">水果类</button>
+                            <button class="food-category-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-category="soy">大豆类</button>
+                            <button class="food-category-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-category="milk">奶类</button>
+                            <button class="food-category-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-category="meat">肉蛋类</button>
+                            <button class="food-category-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-category="nut">坚果类</button>
+                            <button class="food-category-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-category="oil">油类</button>
+                        </div>
+                    </div>
+
+                    <!-- 食物列表 -->
+                    <div id="foodTableList" class="space-y-2">
+                        <!-- 食物项目将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 历史记录页面 -->
+            <div id="historyPage" class="page-content hidden">
+                <div class="p-4 space-y-4">
+                    <div class="bg-white rounded-lg p-4 card-shadow">
+                        <div class="flex flex-wrap gap-4 items-center">
+                            <div class="flex items-center gap-4 flex-wrap">
+                                <input type="date" id="startDate" class="p-2 border rounded-lg w-full sm:w-auto">
+                                <span class="text-gray-500">至</span>
+                                <input type="date" id="endDate" class="p-2 border rounded-lg w-full sm:w-auto">
+                            </div>
+                            <div class="flex items-center gap-4 flex-wrap">
+                                <button id="filterBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg whitespace-nowrap flex-shrink-0"><i class="fas fa-filter mr-2"></i>筛选</button>
+                                <button id="exportBtn" class="bg-emerald-500 text-white px-4 py-2 rounded-lg whitespace-nowrap flex-shrink-0"><i class="fas fa-file-excel mr-2"></i>导出Excel</button>
+                                <button id="importBtn" class="bg-sky-500 text-white px-4 py-2 rounded-lg whitespace-nowrap flex-shrink-0"><i class="fas fa-file-import mr-2"></i>导入数据</button>
+                                <input type="file" id="importFile" class="hidden" accept=".csv">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="historyList" class="space-y-4">
+                        <!-- 历史记录将在这里生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 注意事项页面 -->
+            <div id="notesPage" class="page-content hidden">
+                <div class="p-4 space-y-4">
+                    <!-- 血糖监测 -->
+                    <div class="bg-white rounded-lg p-4 card-shadow">
+                        <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection('bloodSugarSection')">
+                            <h3 class="text-lg font-semibold text-gray-800">
+                                <i class="fas fa-heartbeat text-red-500 mr-2"></i>血糖监测
+                            </h3>
+                            <i class="fas fa-chevron-down text-gray-400"></i>
+                        </div>
+                        <div id="bloodSugarSection" class="text-sm text-gray-600 space-y-2">
+                            <p>• 监测血糖：空腹血糖和每三餐后2小时血糖，连续测三天</p>
+                            <p>• 注意第一口饭开始时，两小时后测血糖</p>
+                            <p>• 理想血糖目标值：</p>
+                            <p class="ml-4">- 空腹血糖 ≤ 5.3 mmol/L</p>
+                            <p class="ml-4">- 餐后2小时血糖 ≤ 6.7 mmol/L</p>
+                            <p>• 血糖 > 6.7 mmol/L时，建议用黄瓜、西红柿等蔬菜替代水果</p>
+                            <p>• 血糖平稳后每周监测一天血糖（包含4次/天）</p>
+                        </div>
+                    </div>
+
+                    <!-- 体重测量 -->
+                    <div class="bg-white rounded-lg p-4 card-shadow">
+                        <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection('weightSection')">
+                            <h3 class="text-lg font-semibold text-gray-800">
+                                <i class="fas fa-weight text-blue-500 mr-2"></i>体重测量
+                            </h3>
+                            <i class="fas fa-chevron-down text-gray-400"></i>
+                        </div>
+                        <div id="weightSection" class="text-sm text-gray-600 space-y-2">
+                            <p>• 正确测量体重的方法：</p>
+                            <p class="ml-4">- 清晨、空腹、排空大小便</p>
+                            <p class="ml-4">- 穿同样多的衣服（轻薄睡衣）</p>
+                            <p class="ml-4">- 赤脚测量</p>
+                            <p>• 每周至少测量2次体重</p>
+                        </div>
+                    </div>
+
+                    <!-- 运动建议 -->
+                    <div class="bg-white rounded-lg p-4 card-shadow">
+                        <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection('exerciseSection')">
+                            <h3 class="text-lg font-semibold text-gray-800">
+                                <i class="fas fa-running text-emerald-500 mr-2"></i>运动建议
+                            </h3>
+                            <i class="fas fa-chevron-down text-gray-400"></i>
+                        </div>
+                        <div id="exerciseSection" class="text-sm text-gray-600 space-y-2">
+                            <p>• 如无产科禁忌，建议每天适量运动</p>
+                            <p>• 建议每天累计30分钟运动</p>
+                        </div>
+                    </div>
+
+                    <!-- 膳食指导 -->
+                    <div class="bg-white rounded-lg p-4 card-shadow">
+                        <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection('dietSection')">
+                            <h3 class="text-lg font-semibold text-gray-800">
+                                <i class="fas fa-utensils text-amber-500 mr-2"></i>膳食指导
+                            </h3>
+                            <i class="fas fa-chevron-down text-gray-400"></i>
+                        </div>
+                        <div id="dietSection" class="text-sm text-gray-600 space-y-2">
+                            <p>• 主食食量估计：</p>
+                            <p class="ml-4">- 1份主食：25g面粉 ≈ 35g全麦面包 ≈ 35g馒头 ≈ 65g熟米饭</p>
+                            <p class="ml-4">- 2份主食：50g面粉 ≈ 75g馒头；50g生米 ≈ 130g熟米饭</p>
+                            <p class="ml-4">- 3份主食：75g生米 ≈ 195g熟米饭；75g面粉 ≈ 112.5g馒头</p>
+                            <p>• 1份肉食=2块排骨或2块带鱼或7-8只中等大小的基围虾等</p>
+                            <p>• 膳食日志记录方法：</p>
+                            <p class="ml-4">- 记录每餐具体内容，如"一片面包40g，一杯牛奶250ml"等</p>
+                            <p class="ml-4">- 记录血糖监测时间及数值</p>
+                            <p class="ml-4">- 记录运动时间和内容</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 底部导航栏 -->
+        <nav class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 px-4 py-2">
+            <div class="flex justify-around">
+                <button class="nav-btn active flex flex-col items-center p-2 text-emerald-500" data-page="home">
+                    <i class="fas fa-home text-xl"></i>
+                    <span class="text-xs mt-1">首页</span>
+                </button>
+                <button class="nav-btn flex flex-col items-center p-2 text-gray-400 hover:text-emerald-500" data-page="record">
+                    <i class="fas fa-utensils text-xl"></i>
+                    <span class="text-xs mt-1">记录</span>
+                </button>
+                <button class="nav-btn flex flex-col items-center p-2 text-gray-400 hover:text-emerald-500" data-page="foodTable">
+                    <i class="fas fa-table text-xl"></i>
+                    <span class="text-xs mt-1">交换表</span>
+                </button>
+                <button class="nav-btn flex flex-col items-center p-2 text-gray-400 hover:text-emerald-500" data-page="history">
+                    <i class="fas fa-history text-xl"></i>
+                    <span class="text-xs mt-1">历史</span>
+                </button>
+                <button class="nav-btn flex flex-col items-center p-2 text-gray-400 hover:text-emerald-500" data-page="notes">
+                    <i class="fas fa-info-circle text-xl"></i>
+                    <span class="text-xs mt-1">注意事项</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- 模态框 -->
+    <!-- 添加食物模态框 -->
+    <div id="addFoodModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col">
+                <div class="p-4 border-b">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold">添加食物</h3>
+                        <button id="closeFoodModal" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex-1 overflow-hidden flex flex-col">
+                    <!-- 搜索框 -->
+                    <div class="p-4 border-b">
+                        <div class="relative">
+                            <input type="text" id="foodSearchInput" placeholder="搜索食物..." class="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                    </div>
+
+                    <!-- 快捷操作区 -->
+                    <div class="p-4 border-b bg-gray-50">
+                        <div class="flex space-x-2">
+                            <button id="customFoodBtn" class="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                                <i class="fas fa-plus mr-1"></i>自定义食物
+                            </button>
+                            <button id="commonFoodBtn" class="flex-1 bg-emerald-500 text-white py-2 px-3 rounded-lg hover:bg-emerald-600 transition-colors text-sm">
+                                <i class="fas fa-star mr-1"></i>常用食物
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 分类标签页 -->
+                    <div class="p-4 border-b">
+                        <div class="flex overflow-x-auto space-x-2 pb-2">
+                            <button class="food-category-tab active px-4 py-2 rounded-full bg-emerald-500 text-white text-sm whitespace-nowrap" data-category="all">全部</button>
+                            <button class="food-category-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-category="grain">谷薯类</button>
+                            <button class="food-category-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-category="vegetable">蔬菜类</button>
+                            <button class="food-category-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-category="fruit">水果类</button>
+                            <button class="food-category-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-category="soy">大豆类</button>
+                            <button class="food-category-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-category="milk">奶类</button>
+                            <button class="food-category-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-category="meat">肉蛋类</button>
+                            <button class="food-category-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-category="nut">坚果类</button>
+                            <button class="food-category-tab px-4 py-2 rounded-full bg-gray-200 text-gray-700 text-sm whitespace-nowrap" data-category="oil">油类</button>
+                        </div>
+                    </div>
+
+                    <!-- 食物列表 -->
+                    <div id="modalFoodList" class="flex-1 overflow-y-auto p-4">
+                        <!-- 食物列表将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 底部操作区域 -->
+                <div class="p-4 border-t bg-gray-50">
+                    <!-- 重量输入 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">重量 (克)</label>
+                        <input type="number" id="foodWeight" placeholder="输入重量" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+
+                    <!-- 食物信息预览 -->
+                    <div id="foodPreview" class="hidden mt-4 p-4 bg-gray-50 rounded-lg border">
+                        <h4 class="font-semibold text-gray-800 mb-2">已选择：<span id="selectedFoodName"></span></h4>
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                            <div>热量: <span id="previewCalories" class="font-medium">0</span><span id="calorieUnit"> kcal/份</span></div>
+                            <div>蛋白质: <span id="previewProtein" class="font-medium">0</span><span id="proteinUnit"> g/份</span></div>
+                            <div>碳水: <span id="previewCarbs" class="font-medium">0</span><span id="carbsUnit"> g/份</span></div>
+                            <div>脂肪: <span id="previewFat" class="font-medium">0</span><span id="fatUnit"> g/份</span></div>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-3">
+                        <button id="cancelFoodBtn" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors">取消</button>
+                        <button id="confirmFoodBtn" class="flex-1 bg-emerald-500 text-white py-2 rounded-lg hover:bg-emerald-600 transition-colors">确认</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 血糖记录模态框 -->
+    <div id="bloodSugarModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg w-full max-w-md">
+                <div class="p-4 border-b">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold">记录血糖</h3>
+                        <button id="closeBloodSugarModal" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">测量时间</label>
+                        <select id="bloodSugarTime" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                            <option value="fasting">空腹</option>
+                            <option value="breakfast-2h">早餐后2小时</option>
+                            <option value="lunch-2h">中餐后2小时</option>
+                            <option value="dinner-2h">晚餐后2小时</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">血糖值 (mmol/L)</label>
+                        <input type="number" step="0.1" id="bloodSugarValue" placeholder="输入血糖值" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+                    <div class="flex space-x-3">
+                        <button id="cancelBloodSugarBtn" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors">取消</button>
+                        <button id="confirmBloodSugarBtn" class="flex-1 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition-colors">确认</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 体重记录模态框 -->
+    <div id="weightModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg w-full max-w-md">
+                <div class="p-4 border-b">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold">记录体重</h3>
+                        <button id="closeWeightModal" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">体重 (kg)</label>
+                        <input type="number" step="0.1" id="weightValue" placeholder="输入体重" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+                    <div class="flex space-x-3">
+                        <button id="cancelWeightBtn" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors">取消</button>
+                        <button id="confirmWeightBtn" class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors">确认</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 应用信息提示模态框 -->
+    <div id="infoModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg w-full max-w-lg max-h-[80vh] flex flex-col">
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-800">温馨提示</h3>
+                    <button id="closeInfoModal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="p-6 overflow-y-auto space-y-4 text-gray-700">
+                    <div class="p-4 bg-blue-50 border-l-4 border-blue-400">
+                        <h4 class="font-bold text-blue-800">重要声明</h4>
+                        <ul class="list-disc list-inside mt-2 text-sm text-blue-700 space-y-1">
+                            <li>本应用的食物交换表及相关营养建议，主要基于 <strong>首都医科大学附属北京妇产医院</strong> 的GDM（妊娠期糖尿病）营养治疗方案制定。</li>
+                            <li>应用提供的热量、碳水等营养成分数据均为 <strong>估算值，仅供参考</strong>。个体需求差异较大，实际饮食方案请务必咨询您的医生或营养师。</li>
+                            <li>本应用不能替代任何专业的医疗建议、诊断或治疗。</li>
+                        </ul>
+                    </div>
+                    <div class="p-4 bg-amber-50 border-l-4 border-amber-400">
+                        <h4 class="font-bold text-amber-800">数据与隐私</h4>
+                        <div class="mt-2 text-sm text-amber-700 space-y-1">
+                            <p>本应用所有数据均<strong>保存在您的本地浏览器</strong>，不会上传至任何服务器，充分保护您的隐私安全。</p>
+                            <p>您可以随时导出数据进行备份，或在更换设备时手动迁移数据。</p>
+                            <p>如需清除数据，请在浏览器设置中清除本网站的本地存储（LocalStorage）。</p>
+                            <p class="mt-2">⚠️ 请勿在公共电脑上使用本应用，以防个人数据泄露。</p>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-purple-50 border-l-4 border-purple-400">
+                        <h4 class="font-bold text-purple-800">数据来源声明</h4>
+                        <div class="mt-2 text-sm text-purple-700 space-y-1">
+                           <p>本应用中的自定义食物营养信息，由 <strong>智谱AI (GLM-4-Flash-250414 模型)</strong> 提供技术支持。AI分析结果可能存在偏差，数据仅供参考，不构成医疗建议。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
+
