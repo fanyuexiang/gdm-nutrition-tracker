@@ -168,6 +168,13 @@ const STORAGE_KEYS = {
     FOOD_FREQUENCY: 'gdm_food_frequency' // 新增：食物频率统计
 };
 
+// 全局分类映射表，确保所有函数都能访问
+const foodCategoriesMap = {
+    grain: '谷薯类', vegetable: '蔬菜类', fruit: '水果类', soy: '大豆类',
+    milk: '奶类', meat: '肉蛋类', nut: '坚果类', oil: '油类', custom: '其他'
+};
+const categoryOrder = Object.values(foodCategoriesMap);
+
 // 初始化应用
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
@@ -1461,16 +1468,10 @@ function handleOldFormatImport(text) {
 }
 
 async function handleNewFormatImport(text) {
-    // BUG FIX: 重新定义所需变量，解决作用域问题
-    const foodCategoriesMap = {
-        grain: '谷薯类', vegetable: '蔬菜类', fruit: '水果类', soy: '大豆类',
-        milk: '奶类', meat: '肉蛋类', nut: '坚果类', oil: '油类', custom: '其他'
-    };
-    const categoryOrder = Object.values(foodCategoriesMap);
-
+    // BUG FIX: 移除函数内部的重复定义，使用全局常量
     const rows = text.split('\n').filter(row => row.trim() !== '');
     const headers = rows.shift().trim().split(',').map(h => h.replace(/"/g, ''));
-
+    
     const datesInFile = new Set();
     let current_date = '';
     
