@@ -55,6 +55,15 @@
             display: none;
         }
     </style>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-72PNK63DF7"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-72PNK63DF7');
+    </script>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- 主容器 -->
@@ -551,6 +560,17 @@
                         <div class="mt-2 text-sm text-purple-700 space-y-1">
                            <p>本应用中的自定义食物营养信息，由 <strong>智谱AI (GLM-4-Flash-250414 模型)</strong> 提供技术支持。AI分析结果可能存在偏差，数据仅供参考，不构成医疗建议。</p>
                         </div>
+                    </div>
+
+                    <!-- 温馨提示内容 -->
+                    <div class="p-6 text-sm text-gray-700 space-y-4">
+                        <p>本工具旨在帮助妊娠期糖尿病（GDM）的准妈妈们更方便地记录和管理每日饮食与血糖，所有数据均存储在您的浏览器本地，不会上传至任何服务器，确保您的隐私安全。</p>
+                        <p>食物交换份数据和营养建议主要参考了相关权威指南，但不能替代专业医生的诊断和个性化建议。请务必在医生或营养师的指导下使用本工具。</p>
+                        <p class="text-xs text-gray-500 pt-2">AI营养查询功能由 <a href="https://www.zhipuai.cn/" target="_blank" class="text-blue-500 hover:underline">智谱AI GLM-4-Flash</a> 模型强力驱动，查询结果仅供参考。</p>
+                    </div>
+
+                    <div class="px-6 py-3 bg-gray-50 text-right">
+                         <span class="text-xs text-gray-400">Version 0.0.1</span>
                     </div>
                 </div>
             </div>

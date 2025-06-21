@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
     }
 
     const url = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-    const prompt = `作为一个营养专家，告诉我${weight}g${foodName}的营养，包括 热量、碳水、蛋白质、脂肪，并把这些数据按照json字符串格式给我，不需要换行，直接转译为字符串给我（不需要提示json格式，不需要 \\n 之类的其他字符串）`;
+    const prompt = `作为一个营养专家，告诉我${weight}g${foodName}的营养，包括 热量、碳水、蛋白质、脂肪、类别（按照谷薯类、蔬菜类、水果类、大豆类、奶类、肉蛋类、坚果类、油类 正确归类），并把这些数据按照json字符串格式给我，不需要换行，直接转译为字符串给我（不需要提示json格式，不需要 \\n 之类的其他字符串）`;
 
     try {
         const response = await axios.post(url, {
