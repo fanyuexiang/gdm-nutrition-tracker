@@ -4,9 +4,10 @@
   "description": "A web application for tracking diet and blood sugar for pregnant women with gestational diabetes.",
   "main": "index.html",
   "scripts": {
-    "start": "node api/query.js"
+    "dev": "wrangler pages dev .",
+    "deploy": "wrangler pages deploy ."
   },
-  "dependencies": {
-    "axios": "^1.7.2"
+  "devDependencies": {
+    "wrangler": "^3.0.0"
   }
 } 
