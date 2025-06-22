@@ -194,6 +194,17 @@ function initializeApp() {
     
     // 显示首页
     showPage('home');
+    
+    // 初始化食物交换表页面的标签状态
+    document.querySelectorAll('#foodTablePage .food-category-tab').forEach(tab => {
+        if (tab.dataset.category === 'all') {
+            tab.classList.add('active', 'bg-emerald-500', 'text-white');
+            tab.classList.remove('bg-gray-200', 'text-gray-700');
+        } else {
+            tab.classList.remove('active', 'bg-emerald-500', 'text-white');
+            tab.classList.add('bg-gray-200', 'text-gray-700');
+        }
+    });
 }
 
 // 设置事件监听器
@@ -350,6 +361,8 @@ function showPage(page) {
     // 页面特定初始化
     if (page === 'history') {
         loadHistoryData();
+    } else if (page === 'foodTable') {
+        initializeFoodTablePage();
     }
 }
 
@@ -487,7 +500,7 @@ function populateFoodTable() {
     if (currentCategory === 'all') {
         Object.keys(foodExchangeData).forEach(category => {
             const categoryName = getCategoryName(category);
-            html += `<h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">${categoryName}</h3>`;
+            html += `<h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2" data-category="${category}">${categoryName}</h3>`;
             
             foodExchangeData[category].forEach(food => {
                 html += `
@@ -509,7 +522,7 @@ function populateFoodTable() {
         });
     } else {
         const categoryName = getCategoryName(currentCategory);
-        html += `<h3 class="text-lg font-semibold text-gray-800 mb-2">${categoryName}</h3>`;
+        html += `<h3 class="text-lg font-semibold text-gray-800 mb-2" data-category="${currentCategory}">${categoryName}</h3>`;
     
         foodExchangeData[currentCategory].forEach(food => {
             html += `
@@ -1636,4 +1649,57 @@ const categoryNameToKeyMap = {
     '油类': 'oil',
     '自定义': 'custom'
 };
+
+// 初始化食物交换表页面
+function initializeFoodTablePage() {
+    // 绑定食物交换表页面的分类标签事件
+    document.querySelectorAll('#foodTablePage .food-category-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            selectFoodTableCategory(this.dataset.category);
+        });
+    });
+    
+    // 默认显示"全部"
+    selectFoodTableCategory('all');
+}
+
+// 选择食物交换表分类
+function selectFoodTableCategory(category) {
+    // 更新标签状态
+    document.querySelectorAll('#foodTablePage .food-category-tab').forEach(tab => {
+        if (tab.dataset.category === category) {
+            tab.classList.add('active', 'bg-emerald-500', 'text-white');
+            tab.classList.remove('bg-gray-200', 'text-gray-700');
+        } else {
+            tab.classList.remove('active', 'bg-emerald-500', 'text-white');
+            tab.classList.add('bg-gray-200', 'text-gray-700');
+        }
+    });
+    
+    currentCategory = category;
+    populateFoodTable();
+    
+    // 滚动到对应分类位置
+    if (category !== 'all') {
+        setTimeout(() => {
+            const categoryHeader = document.querySelector(`#foodTableList h3[data-category="${category}"]`);
+            if (categoryHeader) {
+                // 计算滚动位置，考虑固定头部的高度
+                const headerHeight = 60; // 固定头部的大概高度
+                const elementTop = categoryHeader.offsetTop - headerHeight - 20; // 额外留出20px空间
+                
+                document.getElementById('foodTablePage').scrollTo({
+                    top: elementTop,
+                    behavior: 'smooth'
+                });
+            }
+        }, 150); // 延迟确保内容已渲染
+    } else {
+        // 滚动到食物交换表页面顶部
+        document.getElementById('foodTablePage').scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+}
 
