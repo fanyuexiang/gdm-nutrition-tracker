@@ -67,6 +67,29 @@
             background-color: #d1d5db; /* gray-300 */
             border-radius: 20px;
         }
+
+        .blood-sugar-list-collapse {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s;
+        }
+        .blood-sugar-list-collapse.expanded {
+            max-height: 500px;
+            opacity: 1;
+        }
+        .blood-sugar-list-empty {
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            font-size: 15px;
+        }
+        .info-modal-content {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
     </style>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-72PNK63DF7"></script>
@@ -105,20 +128,28 @@
                 <!-- 状态卡片 -->
                 <div class="p-4 space-y-4">
                     <!-- 血糖状态卡片 -->
-                    <div class="card-shadow card-hover bg-white rounded-lg p-4">
+                    <div class="card-shadow card-hover bg-white rounded-lg p-4 cursor-pointer relative" onclick="toggleBloodSugarList()">
                         <div class="flex items-center justify-between">
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-800">血糖状态</h3>
                                 <p class="text-sm text-gray-600">今日监测次数: <span id="bloodSugarCount">0</span></p>
                             </div>
-                            <div class="text-red-500">
-                                <i class="fas fa-heartbeat text-2xl"></i>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-400 mb-1 select-none">点击展开/收起</div>
+                                <div class="text-red-500">
+                                    <i class="fas fa-heartbeat text-2xl"></i>
+                                </div>
                             </div>
                         </div>
                         <div class="mt-3">
                             <button id="addBloodSugarBtn" class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
                                 <i class="fas fa-plus mr-2"></i>记录血糖
                             </button>
+                        </div>
+                        
+                        <!-- 血糖记录列表（默认收起，有动画） -->
+                        <div id="bloodSugarList" class="blood-sugar-list-collapse mt-3 space-y-2">
+                            <!-- 动态生成的血糖记录 -->
                         </div>
                     </div>
 
@@ -485,13 +516,20 @@
             <div class="bg-white rounded-lg w-full max-w-md">
                 <div class="p-4 border-b">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold">记录血糖</h3>
+                        <h3 class="text-lg font-semibold" id="bloodSugarModalTitle">记录血糖</h3>
                         <button id="closeBloodSugarModal" class="text-gray-400 hover:text-gray-600">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
                 </div>
                 <div class="p-4">
+                    <!-- 隐藏的编辑记录ID -->
+                    <input type="hidden" id="editingBloodSugarId" value="">
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">记录日期</label>
+                        <input type="date" id="bloodSugarDate" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">测量时间</label>
                         <select id="bloodSugarTime" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
@@ -527,6 +565,10 @@
                     </div>
                 </div>
                 <div class="p-4">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">记录日期</label>
+                        <input type="date" id="weightDate" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">体重 (kg)</label>
                         <input type="number" step="0.1" id="weightValue" placeholder="输入体重" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
@@ -576,7 +618,15 @@
                     </div>
 
                     <div class="px-6 py-3 bg-gray-50 text-right">
-                         <span class="text-xs text-gray-400">Version 0.0.1</span>
+                         <span class="text-xs text-gray-400">Version 0.0.2</span>
+                    </div>
+                    <!-- 版本记录 -->
+                    <div class="px-6 pb-4 pt-2">
+                        <div class="text-xs text-gray-400 font-semibold mb-1">版本记录</div>
+                        <ul class="text-xs text-gray-500 space-y-1">
+                            <li><span class="font-bold">0.0.2</span>（2024-06-25）：<br>血糖记录支持编辑和删除，卡片展开/收起更流畅，操作更方便，提示更清晰。</li>
+                            <li><span class="font-bold">0.0.1</span>（2024-06-20）：<br>孕妇控糖餐饮记录应用首发上线，支持饮食、血糖、体重记录与本地存储。</li>
+                        </ul>
                     </div>
                 </div>
             </div>

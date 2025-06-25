@@ -205,6 +205,12 @@ function initializeApp() {
             tab.classList.add('bg-gray-200', 'text-gray-700');
         }
     });
+    
+    // 确保血糖列表初始状态正确（动画版）
+    const bloodSugarList = document.getElementById('bloodSugarList');
+    if (bloodSugarList) {
+        bloodSugarList.classList.remove('expanded');
+    }
 }
 
 // 设置事件监听器
@@ -242,7 +248,13 @@ function setupEventListeners() {
     document.getElementById('addFoodBtn').addEventListener('click', showAddFoodModal);
 
     // 血糖记录按钮
-    document.getElementById('addBloodSugarBtn').addEventListener('click', showBloodSugarModal);
+    const addBloodSugarBtn = document.getElementById('addBloodSugarBtn');
+    if (addBloodSugarBtn) {
+        addBloodSugarBtn.addEventListener('click', function(event) {
+            event.stopPropagation();
+            showBloodSugarModal();
+        });
+    }
 
     // 体重记录按钮
     document.getElementById('addWeightBtn').addEventListener('click', showWeightModal);
@@ -295,6 +307,14 @@ function setupEventListeners() {
         // 清空value，确保下次选择相同文件也能触发change事件
         event.target.value = '';
     });
+
+    // 血糖记录列表整体阻止冒泡
+    const bloodSugarList = document.getElementById('bloodSugarList');
+    if (bloodSugarList) {
+        bloodSugarList.addEventListener('click', function(event) {
+            event.stopPropagation();
+        });
+    }
 }
 
 // 设置模态框事件
@@ -422,6 +442,12 @@ function loadTodayData() {
     // 加载血糖记录数
     const bloodSugarRecords = getBloodSugarRecords(today);
     document.getElementById('bloodSugarCount').textContent = bloodSugarRecords.length;
+    
+    // 如果血糖列表是展开状态，重新加载列表
+    const bloodSugarList = document.getElementById('bloodSugarList');
+    if (!bloodSugarList.classList.contains('hidden')) {
+        loadBloodSugarList();
+    }
     
     // 加载最近体重
     const weightRecords = getWeightRecords();
@@ -652,19 +678,83 @@ function confirmAddFood() {
 // 显示血糖记录模态框
 function showBloodSugarModal() {
     document.getElementById('bloodSugarModal').classList.remove('hidden');
+    // 重置为添加模式
+    document.getElementById('editingBloodSugarId').value = '';
+    document.getElementById('bloodSugarModalTitle').textContent = '记录血糖';
+    // 设置默认日期为今天
+    document.getElementById('bloodSugarDate').value = currentDate;
     document.getElementById('bloodSugarTime').value = 'fasting';
     document.getElementById('bloodSugarValue').value = '';
+    
+    // 添加时间选择变化监听，自动预填充现有数据
+    setupBloodSugarTimeChangeListener();
+}
+
+// 设置血糖时间选择变化监听
+function setupBloodSugarTimeChangeListener() {
+    const timeSelect = document.getElementById('bloodSugarTime');
+    const dateInput = document.getElementById('bloodSugarDate');
+    
+    const checkExistingRecord = () => {
+        const selectedDate = dateInput.value;
+        const selectedTime = timeSelect.value;
+        
+        if (selectedDate && selectedTime) {
+            const existingRecord = findExistingBloodSugarRecord(selectedDate, selectedTime);
+            if (existingRecord) {
+                // 预填充现有数据，但不切换到编辑模式
+                document.getElementById('bloodSugarValue').value = existingRecord.value;
+                // 可以添加一个微妙的提示
+                document.getElementById('bloodSugarModalTitle').textContent = '记录血糖 (将覆盖现有记录)';
+            } else {
+                // 清空数值，显示正常标题
+                document.getElementById('bloodSugarValue').value = '';
+                document.getElementById('bloodSugarModalTitle').textContent = '记录血糖';
+            }
+        }
+    };
+    
+    // 移除之前的监听器（避免重复绑定）
+    timeSelect.removeEventListener('change', checkExistingRecord);
+    dateInput.removeEventListener('change', checkExistingRecord);
+    
+    // 添加新的监听器
+    timeSelect.addEventListener('change', checkExistingRecord);
+    dateInput.addEventListener('change', checkExistingRecord);
+    
+    // 初始检查
+    checkExistingRecord();
 }
 
 // 隐藏血糖记录模态框
 function hideBloodSugarModal() {
     document.getElementById('bloodSugarModal').classList.add('hidden');
+    
+    // 清理事件监听器
+    const timeSelect = document.getElementById('bloodSugarTime');
+    const dateInput = document.getElementById('bloodSugarDate');
+    
+    // 移除所有change事件监听器
+    timeSelect.replaceWith(timeSelect.cloneNode(true));
+    dateInput.replaceWith(dateInput.cloneNode(true));
+    
+    // 重置模态框状态
+    document.getElementById('editingBloodSugarId').value = '';
+    document.getElementById('bloodSugarModalTitle').textContent = '记录血糖';
+    document.getElementById('bloodSugarValue').value = '';
 }
 
 // 确认血糖记录
 function confirmBloodSugar() {
+    const editingId = document.getElementById('editingBloodSugarId').value;
+    const dateInput = document.getElementById('bloodSugarDate');
     const timeSelect = document.getElementById('bloodSugarTime');
     const valueInput = document.getElementById('bloodSugarValue');
+    
+    if (!dateInput.value) {
+        alert('请选择记录日期');
+        return;
+    }
     
     if (!valueInput.value) {
         alert('请输入血糖值');
@@ -672,22 +762,61 @@ function confirmBloodSugar() {
     }
     
     const record = {
-        id: Date.now().toString(),
-        date: currentDate,
+        date: dateInput.value,
         time: timeSelect.value,
         value: parseFloat(valueInput.value),
         timestamp: new Date().toISOString()
     };
     
-    saveBloodSugarRecord(record);
+    if (editingId) {
+        // 编辑模式：更新现有记录
+        record.id = editingId;
+        updateBloodSugarRecord(record);
+        showMessage('血糖记录已更新');
+    } else {
+        // 添加模式：智能覆盖或创建新记录
+        const existingRecord = findExistingBloodSugarRecord(record.date, record.time);
+        
+        if (existingRecord) {
+            // 如果存在相同日期和时间的记录，覆盖它
+            record.id = existingRecord.id;
+            updateBloodSugarRecord(record);
+            showMessage('血糖记录已更新');
+        } else {
+            // 如果不存在，创建新记录
+            record.id = Date.now().toString();
+            saveBloodSugarRecord(record);
+            showMessage('血糖记录已添加');
+        }
+    }
+    
     loadTodayData();
+    loadBloodSugarList();
     hideBloodSugarModal();
-    showMessage('血糖记录已添加');
+}
+
+// 查找已存在的血糖记录
+function findExistingBloodSugarRecord(date, time) {
+    const records = JSON.parse(localStorage.getItem(STORAGE_KEYS.BLOOD_SUGAR_RECORDS) || '[]');
+    return records.find(r => r.date === date && r.time === time);
+}
+
+// 更新血糖记录
+function updateBloodSugarRecord(updatedRecord) {
+    const records = JSON.parse(localStorage.getItem(STORAGE_KEYS.BLOOD_SUGAR_RECORDS) || '[]');
+    const index = records.findIndex(r => r.id === updatedRecord.id);
+    
+    if (index !== -1) {
+        records[index] = updatedRecord;
+        localStorage.setItem(STORAGE_KEYS.BLOOD_SUGAR_RECORDS, JSON.stringify(records));
+    }
 }
 
 // 显示体重记录模态框
 function showWeightModal() {
     document.getElementById('weightModal').classList.remove('hidden');
+    // 设置默认日期为今天
+    document.getElementById('weightDate').value = currentDate;
     document.getElementById('weightValue').value = '';
 }
 
@@ -698,7 +827,13 @@ function hideWeightModal() {
 
 // 确认体重记录
 function confirmWeight() {
+    const dateInput = document.getElementById('weightDate');
     const valueInput = document.getElementById('weightValue');
+    
+    if (!dateInput.value) {
+        alert('请选择记录日期');
+        return;
+    }
     
     if (!valueInput.value) {
         alert('请输入体重');
@@ -707,7 +842,7 @@ function confirmWeight() {
     
     const record = {
         id: Date.now().toString(),
-        date: currentDate,
+        date: dateInput.value,
         weight: parseFloat(valueInput.value),
         timestamp: new Date().toISOString()
     };
@@ -1700,6 +1835,119 @@ function selectFoodTableCategory(category) {
             top: 0,
             behavior: 'smooth'
         });
+    }
+}
+
+// 切换血糖记录列表显示/隐藏（带动画）
+function toggleBloodSugarList() {
+    const bloodSugarList = document.getElementById('bloodSugarList');
+    if (bloodSugarList.classList.contains('expanded')) {
+        bloodSugarList.classList.remove('expanded');
+    } else {
+        bloodSugarList.classList.add('expanded');
+        loadBloodSugarList();
+    }
+}
+
+// 加载血糖记录列表
+function loadBloodSugarList() {
+    const bloodSugarList = document.getElementById('bloodSugarList');
+    const today = new Date().toISOString().split('T')[0];
+    const records = getBloodSugarRecords(today);
+    
+    if (records.length === 0) {
+        bloodSugarList.innerHTML = '<div class="blood-sugar-list-empty">今日暂无血糖记录</div>';
+        return;
+    }
+    
+    // 按时间顺序排序
+    const timeOrder = ['fasting', 'breakfast-2h', 'lunch-2h', 'dinner-2h'];
+    records.sort((a, b) => timeOrder.indexOf(a.time) - timeOrder.indexOf(b.time));
+    
+    const recordsHtml = records.map(record => {
+        const timeName = getBloodSugarTimeName(record.time);
+        const valueColor = getBloodSugarValueColor(record.value);
+        const recordTime = new Date(record.timestamp).toLocaleTimeString('zh-CN', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        
+        return `
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div class="flex-1">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm font-medium text-gray-800">${timeName}</span>
+                        <span class="text-sm ${valueColor} font-semibold">${record.value} mmol/L</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">记录时间: ${recordTime}</div>
+                </div>
+                <div class="flex space-x-2">
+                    <button class="edit-blood-sugar-btn text-blue-500 hover:text-blue-700 p-1" data-id="${record.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="delete-blood-sugar-btn text-red-500 hover:text-red-700 p-1" data-id="${record.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    bloodSugarList.innerHTML = recordsHtml;
+
+    // 阻止编辑、删除按钮冒泡
+    bloodSugarList.querySelectorAll('.edit-blood-sugar-btn').forEach(btn => {
+        btn.addEventListener('click', function(event) {
+            event.stopPropagation();
+            editBloodSugarRecord(this.dataset.id);
+        });
+    });
+    bloodSugarList.querySelectorAll('.delete-blood-sugar-btn').forEach(btn => {
+        btn.addEventListener('click', function(event) {
+            event.stopPropagation();
+            deleteBloodSugarRecord(this.dataset.id);
+        });
+    });
+}
+
+// 获取血糖值颜色
+function getBloodSugarValueColor(value) {
+    if (value <= 5.3) return 'text-green-600'; // 正常
+    if (value <= 6.7) return 'text-orange-600'; // 偏高
+    return 'text-red-600'; // 过高
+}
+
+// 编辑血糖记录
+function editBloodSugarRecord(recordId) {
+    const records = getBloodSugarRecords();
+    const record = records.find(r => r.id === recordId);
+    
+    if (!record) {
+        alert('记录不存在');
+        return;
+    }
+    
+    // 设置编辑模式
+    document.getElementById('editingBloodSugarId').value = recordId;
+    document.getElementById('bloodSugarModalTitle').textContent = '编辑血糖记录';
+    document.getElementById('bloodSugarDate').value = record.date;
+    document.getElementById('bloodSugarTime').value = record.time;
+    document.getElementById('bloodSugarValue').value = record.value;
+    
+    // 显示模态框
+    document.getElementById('bloodSugarModal').classList.remove('hidden');
+}
+
+// 删除血糖记录
+function deleteBloodSugarRecord(recordId) {
+    if (confirm('确定要删除这条血糖记录吗？')) {
+        const records = JSON.parse(localStorage.getItem(STORAGE_KEYS.BLOOD_SUGAR_RECORDS) || '[]');
+        const filteredRecords = records.filter(r => r.id !== recordId);
+        localStorage.setItem(STORAGE_KEYS.BLOOD_SUGAR_RECORDS, JSON.stringify(filteredRecords));
+        
+        loadTodayData();
+        loadBloodSugarList();
+        showMessage('血糖记录已删除');
     }
 }
 
